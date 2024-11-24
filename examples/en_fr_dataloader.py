@@ -33,9 +33,9 @@ def etl_func(row, **kwargs):
     return tokens_tensor
 
 
-csv_dl = data_loader.csv_data_loader('data/en-fr.csv', etl_func=etl_func, tokenizer=tokenizer, max_length=5)
+csv_dl = data_loader.csv_data_loader('data/en-fr.csv', 33, etl_func=etl_func, tokenizer=tokenizer, max_length=5)
 
-for i in range(100):
-    tensor = next(csv_dl)
+
+for tensor in csv_dl:
     print(tensor.size(), tensor.shape)
     print(tensor)
