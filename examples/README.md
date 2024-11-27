@@ -6,4 +6,6 @@ You need to download the en-fr translation dataset (en-fr.csv) from Kaggle websi
 
 https://www.kaggle.com/datasets/dhruvildave/en-fr-translation-dataset?resource=download
 
-Then you can directly run ```en_fr_dataloader.py``` to generate batch tensors.
+Then you can directly run ```en_fr_dataloader.py``` to verify batch tensor generation.
+
+Then, you can run ```en_fr_translation.py``` to train a model from scratch (needs hyperparameter tuning). 
