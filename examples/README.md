@@ -1,6 +1,6 @@
 # Examples
 
-## en-fr translation dataloader
+## English to French translation
 
 You need to download the en-fr translation dataset (en-fr.csv) from Kaggle website into ```data/``` directory first. 
 
