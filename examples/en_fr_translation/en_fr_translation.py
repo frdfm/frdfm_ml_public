@@ -21,7 +21,7 @@ chunk_size = 64 * 1024  # How many rows to cache
 emb_size = 256 * 3
 num_head = 12
 num_layers = 12
-lr = 0.001  # Initial lr
+lr = 0.1  # Initial lr
 lr_decay_rate = .9999
 num_epoch = 10
 ds_size = 1_000_000  # Number of healthy rows in dataset
@@ -69,12 +69,15 @@ for epoch in range(num_epoch):
         output_for_val = output[:, :-1, :]
 
         loss = criterion(output_for_val.contiguous().view(-1, vocab_size), tgt_input.contiguous().view(-1))
+        loss_value = loss.item()
         loss.backward()
         optimizer.step()
 
+        del src, tgt, tgt_input, output, output_for_val, loss
+
         for param_group in optimizer.param_groups:
             if i % pr_inter == 0:
-                print(f"{i:10d} :: {i * batch_size:10d} :: {param_group['lr']:10.8f} :: {loss.item():9.6f}")
+                print(f"{i:10d} :: {i * batch_size:10d} :: {param_group['lr']:10.8f} :: {loss_value:9.6f}")
 
             param_group['lr'] = param_group['lr'] * lr_decay_rate
 
