@@ -7,5 +7,6 @@ Run `RAG/simple_RAG_indexer` once to create the `local_data.db` from `data/Moon.
 Run `RAG/simple_RAG_retriever` to generate enriched prompts.
 
 Demo screenshot:
+
 ![demo_screenshot](demo.png)
 
