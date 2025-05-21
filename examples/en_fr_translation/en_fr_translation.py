@@ -21,7 +21,7 @@ chunk_size = 64 * 1024  # How many rows to cache
 emb_size = 256 * 3
 num_head = 12
 num_layers = 12
-lr = 0.1  # Initial lr
+lr = 0.00001  # Initial lr
 lr_decay_rate = .9999
 num_epoch = 10
 ds_size = 1_000_000  # Number of healthy rows in dataset
@@ -84,7 +84,7 @@ for epoch in range(num_epoch):
         if i % eval_inter == 0:
             model.eval()
             with torch.no_grad():
-                for j in range(1, 4):
-                    print("Hi", "-->", generate_translation(model, tokenizer, "Hi", seq_size, j, j))
-                    print("Hi, I am a student.", "-->", generate_translation(model, tokenizer, "Hi, I am a student.", seq_size, j, j))
-                    print("How are you?", "-->", generate_translation(model, tokenizer, "How are you?", seq_size, j, j))
+                for j in range(1, 2):
+                    print("Hi", "-->", generate_translation(model, tokenizer, "Hi", seq_size, 1, 10))
+                    print("Hi, I am a student.", "-->", generate_translation(model, tokenizer, "Hi, I am a student.", seq_size, 1, 10))
+                    print("How are you?", "-->", generate_translation(model, tokenizer, "How are you?", seq_size, 1, 10))
