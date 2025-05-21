@@ -22,7 +22,7 @@ emb_size = 256 * 3
 num_head = 12
 num_layers = 12
 lr = 0.00001  # Initial lr
-lr_decay_rate = .9999
+lr_decay_rate = .9999_99
 num_epoch = 10
 ds_size = 1_000_000  # Number of healthy rows in dataset
 pr_inter = 10  # Print interval
@@ -84,7 +84,10 @@ for epoch in range(num_epoch):
         if i % eval_inter == 0:
             model.eval()
             with torch.no_grad():
-                for j in range(1, 2):
-                    print("Hi", "-->", generate_translation(model, tokenizer, "Hi", seq_size, 1, 10))
-                    print("Hi, I am a student.", "-->", generate_translation(model, tokenizer, "Hi, I am a student.", seq_size, 1, 10))
-                    print("How are you?", "-->", generate_translation(model, tokenizer, "How are you?", seq_size, 1, 10))
+                txts = [
+                    "This book is a very good book to read .",
+                    "Hi ! I am a student . What is your job ?",
+                    "Today is a very hot day"
+                ]
+                for txt in txts:
+                    print(txt, "-->", generate_translation(model, tokenizer, txt, seq_size, 1, 10))
