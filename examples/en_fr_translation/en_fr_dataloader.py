@@ -12,7 +12,7 @@ def etl_func(row, **kwargs):
         row_en,
         padding='max_length',
         truncation=True,
-        max_length=max_length -1 ,
+        max_length=max_length,
         return_tensors="pt",
         return_attention_mask=False
     )
@@ -26,8 +26,8 @@ def etl_func(row, **kwargs):
         return_attention_mask=False
     )
 
-    tokens_en['input_ids'] = torch.cat([torch.tensor([[tokenizer.eos_token_id]]), tokens_en['input_ids']], dim=1)
-    tokens_fr['input_ids'] = torch.cat([torch.tensor([[tokenizer.eos_token_id]]), tokens_fr['input_ids']], dim=1)
+    # tokens_en['input_ids'] = torch.cat([torch.tensor([[tokenizer.eos_token_id]]), tokens_en['input_ids']], dim=1)
+    tokens_fr['input_ids'] = torch.cat([torch.tensor([[0]]), tokens_fr['input_ids']], dim=1)
 
     tokens_tensor = torch.cat((tokens_en['input_ids'].view(-1), tokens_fr['input_ids'].view(-1)), dim=-1)
     return tokens_tensor

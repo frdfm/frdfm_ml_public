@@ -5,26 +5,31 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from frdfmml.utils.gen_translation_utils import generate_translation
+from frdfmml.utils.AnimalTokenizer import AnimalTokenizer
 
 # tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
+# tokenizer = AnimalTokenizer()
 tokenizer.pad_token = tokenizer.eos_token
+tokenizer.bos_token_id = tokenizer.convert_tokens_to_ids(tokenizer.bos_token)
+
+
 
 # print(tokenizer.bos_token, tokenizer.bos_token_id)
 # print(tokenizer.eos_token, tokenizer.eos_token_id)
 # print(tokenizer.pad_token, tokenizer.pad_token_id)
 
 vocab_size = tokenizer.vocab_size
-seq_size = 16  # Maximum size of the sequence
-batch_size = 256
-chunk_size = 64 * 1024  # How many rows to cache
-emb_size = 256 * 3
+seq_size = 7#16  # Maximum size of the sequence
+batch_size = 32 #256 // 4
+chunk_size = 256 * 100  # How many rows to cache
 num_head = 12
 num_layers = 12
-lr = 0.00001  # Initial lr
-lr_decay_rate = .9999_99
-num_epoch = 10
-ds_size = 1_000_000  # Number of healthy rows in dataset
+emb_size = num_head * 64 # 256 * 3 * 2
+lr = 0.00001  # Initial lr # a good one 0.00001
+lr_decay_rate = 0.99997698 # a good one .99999
+num_epoch = 1000000
+ds_size = 20_000_000  # Number of healthy rows in dataset
 pr_inter = 10  # Print interval
 eval_inter = 100  # Eval interval
 
@@ -32,18 +37,16 @@ eval_inter = 100  # Eval interval
 class TransformerModel(nn.Module):
     def __init__(self, vocab_size, emb_size, num_head, num_layers, seq_size):
         super().__init__()
-
         self.embedding = nn.Embedding(vocab_size, emb_size)
-        self.positional_encoding = nn.Parameter(torch.zeros(seq_size, emb_size), requires_grad=True)
+        self.dropout = nn.Dropout(0.1)
+        self.positional_encoding_src = nn.Parameter(torch.zeros(seq_size, emb_size), requires_grad=True)
+        self.positional_encoding_tgt = nn.Parameter(torch.zeros(seq_size, emb_size), requires_grad=True)
         self.transformer = nn.Transformer(emb_size, num_head, num_layers)
         self.fc = nn.Linear(emb_size, vocab_size)
 
-        # Optional
-        # self.fc.weight = self.embedding.weight
-
     def forward(self, src, tgt):
-        src_emb = self.embedding(src) + self.positional_encoding
-        tgt_emb = self.embedding(tgt) + self.positional_encoding
+        src_emb = self.dropout(self.embedding(src) + self.positional_encoding_src)
+        tgt_emb = self.dropout(self.embedding(tgt) + self.positional_encoding_tgt)
         out = self.transformer(src_emb, tgt_emb)
         return self.fc(out)
 
@@ -52,12 +55,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = TransformerModel(vocab_size=vocab_size, emb_size=emb_size, num_head=num_head, num_layers=num_layers, seq_size=seq_size).to(device)
 model.device = device
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-2)
 
 for epoch in range(num_epoch):
 
     dl = data_loader.csv_data_loader('../data/en-fr.csv', ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size)
     for i, batch in enumerate(dl):
+
+        # print(tokenizer.decode(batch[0, :], skip_special_tokens=True))
 
         model.train()
         optimizer.zero_grad()
@@ -77,7 +82,7 @@ for epoch in range(num_epoch):
 
         for param_group in optimizer.param_groups:
             if i % pr_inter == 0:
-                print(f"{i:10d} :: {i * batch_size:10d} :: {param_group['lr']:10.8f} :: {loss_value:9.6f}")
+                print(f"{i:10d} :: {i * batch_size:10d} :: {param_group['lr']:12.10f} :: {loss_value:9.6f}")
 
             param_group['lr'] = param_group['lr'] * lr_decay_rate
 
@@ -85,9 +90,11 @@ for epoch in range(num_epoch):
             model.eval()
             with torch.no_grad():
                 txts = [
-                    "This book is a very good book to read .",
-                    "Hi ! I am a student . What is your job ?",
-                    "Today is a very hot day"
+                    # "Hi! How are you?",
+                    # "What time is it?",
+                    "Today is a good day."
                 ]
-                for txt in txts:
-                    print(txt, "-->", generate_translation(model, tokenizer, txt, seq_size, 1, 10))
+
+                for jj in range(1, 11):
+                    for txt in txts:
+                        print(txt, "-->", generate_translation(model, tokenizer, txt, seq_size, jj, jj))
