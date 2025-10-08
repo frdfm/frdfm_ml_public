@@ -2,16 +2,16 @@
 
 ## Installation
 
-You can install the package via `pip`:
+You can install the package (```frdfm-ml```) via `pip`:
 
 ```bash
-pip install git+https://github.com/frdfm/ML.git
+pip install git+https://github.com/frdfm/frdfm_ml_public.git
 ```
 
 ## Usage
 
 ```python
-import frdfmml
+import frdfm_ml
 ```
 
 ## License

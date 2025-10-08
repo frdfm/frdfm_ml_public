@@ -1,4 +1,4 @@
-from frdfmml.utils.RAG_utils import retrieve_similar
+from frdfm_ml.utils.RAG_utils import retrieve_similar
 from transformers import AutoTokenizer, AutoModel
 
 

@@ -1,4 +1,4 @@
-from frdfmml.utils.RAG_utils import store_embeddings
+from frdfm_ml.utils.RAG_utils import store_embeddings
 from transformers import AutoTokenizer, AutoModel
 
 

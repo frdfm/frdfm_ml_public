@@ -1,11 +1,11 @@
-from frdfmml.utils import data_loader
+from frdfm_ml.utils import data_loader
 from transformers import GPT2Tokenizer, AutoTokenizer
 from en_fr_dataloader import etl_func
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from frdfmml.utils.gen_translation_utils import generate_translation
-from frdfmml.utils.AnimalTokenizer import AnimalTokenizer
+from frdfm_ml.utils.gen_translation_utils import generate_translation
+from frdfm_ml.utils.AnimalTokenizer import AnimalTokenizer
 
 # tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
