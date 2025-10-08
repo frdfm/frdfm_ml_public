@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frdfm-ml"
+version = "0.1.0"
+description = "ML utilities and examples (RAG, tokenization, data loading, translation)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "frdfm" }
+]
+
+dependencies = [
+  "sentencepiece",
+]
+
+[project.urls]
+Homepage = "https://github.com/frdfm/frdfm_ml_public"
+
+[tool.setuptools.packages.find]
+# Package folder is now `frdfm_ml/`, expose import as `import frdfm_ml`
+where = ["."]
+include = ["frdfm_ml*"]
