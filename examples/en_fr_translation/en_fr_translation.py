@@ -59,7 +59,7 @@ optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-2)
 
 for epoch in range(num_epoch):
 
-    dl = data_loader.csv_data_loader('../data/en-fr.csv', ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size)
+    dl = data_loader.csv_data_loader('../../data/en-fr.csv', ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size)
     for i, batch in enumerate(dl):
 
         # print(tokenizer.decode(batch[0, :], skip_special_tokens=True))
