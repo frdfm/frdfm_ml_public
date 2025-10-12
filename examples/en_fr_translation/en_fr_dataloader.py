@@ -6,7 +6,7 @@ def etl_func(row, **kwargs):
     max_length = kwargs['max_length']
     tokenizer = kwargs['tokenizer']
 
-    row_en, row_fr = (row['en'], row['fr'])
+    row_en, row_fr = (row[0], row[1])
 
     tokens_en = tokenizer(
         row_en,

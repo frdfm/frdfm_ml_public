@@ -1,3 +1,6 @@
+import math
+import random
+
 from frdfm_ml.utils import data_loader
 from transformers import GPT2Tokenizer, AutoTokenizer
 from en_fr_dataloader import etl_func
@@ -20,7 +23,7 @@ tokenizer.bos_token_id = tokenizer.convert_tokens_to_ids(tokenizer.bos_token)
 # print(tokenizer.pad_token, tokenizer.pad_token_id)
 
 vocab_size = tokenizer.vocab_size
-seq_size = 7#16  # Maximum size of the sequence
+seq_size = 100#7#16  # Maximum size of the sequence
 batch_size = 32 #256 // 4
 chunk_size = 256 * 100  # How many rows to cache
 num_head = 12
@@ -28,9 +31,11 @@ num_layers = 12
 emb_size = num_head * 64 # 256 * 3 * 2
 lr = 0.00001  # Initial lr # a good one 0.00001
 lr_decay_rate = 0.99997698 # a good one .99999
+LEARNING_RATE = 0.001
+power01 = 1
 num_epoch = 1000000
-ds_size = 20_000_000  # Number of healthy rows in dataset
-pr_inter = 10  # Print interval
+ds_size = 1_600_000  # Number of healthy rows in dataset
+pr_inter = 1  # Print interval
 eval_inter = 100  # Eval interval
 
 
@@ -55,15 +60,27 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = TransformerModel(vocab_size=vocab_size, emb_size=emb_size, num_head=num_head, num_layers=num_layers, seq_size=seq_size).to(device)
 model.device = device
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-2)
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-2)
+
+# Create iterators for eval dataset
+dl_eval = data_loader.csv_data_loader_from_two_files(
+    '../../data/europarl-v7.fr-en_eval.en',
+    '../../data/europarl-v7.fr-en_eval.fr',
+    ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size
+)
+eval_iter = iter(dl_eval)
 
 for epoch in range(num_epoch):
 
-    dl = data_loader.csv_data_loader('../../data/en-fr.csv', ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size)
-    for i, batch in enumerate(dl):
+    dl_train = data_loader.csv_data_loader_from_two_files(
+        '../../data/europarl-v7.fr-en_train.en',
+        '../../data/europarl-v7.fr-en_train.fr',
+        ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size
+    )
 
-        # print(tokenizer.decode(batch[0, :], skip_special_tokens=True))
+    for i, batch in enumerate(dl_train):
 
+        # --- Training ---
         model.train()
         optimizer.zero_grad()
 
@@ -73,28 +90,48 @@ for epoch in range(num_epoch):
         output = model(src, tgt)
         output_for_val = output[:, :-1, :]
 
-        loss = criterion(output_for_val.contiguous().view(-1, vocab_size), tgt_input.contiguous().view(-1))
+        loss = criterion(output_for_val.contiguous().view(-1, vocab_size),
+                         tgt_input.contiguous().view(-1))
         loss_value = loss.item()
         loss.backward()
         optimizer.step()
 
         del src, tgt, tgt_input, output, output_for_val, loss
 
+
+
+
+        model.eval()
+        with torch.no_grad():
+            try:
+                eval_batch = next(eval_iter)
+            except:
+
+                dl_eval = data_loader.csv_data_loader_from_two_files(
+                    '../../data/europarl-v7.fr-en_eval.en',
+                    '../../data/europarl-v7.fr-en_eval.fr',
+                    ds_size, etl_func=etl_func, tokenizer=tokenizer, max_length=seq_size, chunk_size=chunk_size, batch_size=batch_size
+                )
+                eval_iter = iter(dl_eval)
+                eval_batch = next(eval_iter)
+
+            src_eval, tgt_eval = eval_batch[:, :eval_batch.size(-1) // 2].to(device), \
+                                 eval_batch[:, eval_batch.size(-1) // 2:].to(device)
+            tgt_input_eval = tgt_eval[:, 1:]
+
+            output_eval = model(src_eval, tgt_eval)
+            output_for_val_eval = output_eval[:, :-1, :]
+
+            eval_loss = criterion(output_for_val_eval.contiguous().view(-1, vocab_size),
+                                  tgt_input_eval.contiguous().view(-1))
+            eval_loss_value = eval_loss.item()
+
+            del src_eval, tgt_eval, tgt_input_eval, output_eval, output_for_val_eval, eval_loss
+
         for param_group in optimizer.param_groups:
             if i % pr_inter == 0:
-                print(f"{i:10d} :: {i * batch_size:10d} :: {param_group['lr']:12.10f} :: {loss_value:9.6f}")
+                print(f"{epoch:10d} :: {i * batch_size:10d} :: {param_group['lr']:22.20f} :: Train Loss = {loss_value:9.6f} :: Eval Loss = {eval_loss_value:9.6f} :: {generate_translation(model, tokenizer, 'It has been one of the major priorities of the Irish presidency to secure more coordinated and effective action at European Union level against drug trafficking and drug abuse.', seq_size, 1, 1)}")
+            #new_lr = (math.exp(eval_loss_value) / 50_000.) ** power01 * LEARNING_RATE
+            new_lr = 1/10**(random.randint(4+epoch,7+epoch))
+            param_group['lr'] = new_lr#param_group['lr'] * lr_decay_rate
 
-            param_group['lr'] = param_group['lr'] * lr_decay_rate
-
-        if i % eval_inter == 0:
-            model.eval()
-            with torch.no_grad():
-                txts = [
-                    # "Hi! How are you?",
-                    # "What time is it?",
-                    "Today is a good day."
-                ]
-
-                for jj in range(1, 11):
-                    for txt in txts:
-                        print(txt, "-->", generate_translation(model, tokenizer, txt, seq_size, jj, jj))

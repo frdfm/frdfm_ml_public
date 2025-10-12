@@ -1,4 +1,7 @@
 .idea
 __pycache__
 /data/en-fr.csv
-/examples/RAG/local_data.db
+
+*.db
+*.en
+*.fr
